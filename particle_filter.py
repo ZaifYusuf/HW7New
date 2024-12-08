@@ -182,7 +182,7 @@ class ParticleFilter:
         
         return new_particles
 
-def weight_gaussian_kernel(x1, x2, std = 250):
+def weight_gaussian_kernel(x1, x2, std = 0.1):
     """
     Returns the gaussian kernel of the distance between vectors x1 and x2
     std: controls the shape of the gaussian, i.e. controls how much you penalize

@@ -70,7 +70,11 @@ class ParticleFilter:
         particles = []
 
         # BEGIN_YOUR_CODE ######################################################
-        raise NotImplementedError
+        for _ in range(self.num_particles):
+            pos = np.array([np.random.uniform(self.minx, self.maxx), np.random.uniform(self.miny, self.maxy)])
+            orient = np.random.rand(2) - 0.5  # Random orientation
+            orient = orient / np.linalg.norm(orient)  # Normalize to unit vector
+            particles.append(Particle(pos, orient))
         
         # END_YOUR_CODE ########################################################
 
@@ -108,13 +112,14 @@ class ParticleFilter:
         new_particles = []
 
         # BEGIN_YOUR_CODE ######################################################
-        raise NotImplementedError
-        #Hint: when computing the weights of each particle, you will probably want
-        # to use compute_prenorm_weight to compute an unnormalized weight for each
-        # particle individually, and then normalize the weights of all the particles
-        # using normalize_weights
+        for particle in self.particles:
+            new_particle = self.transition_sample(particle, delta_angle, speed)
+            new_particles.append(new_particle)
 
-        
+        for particle in new_particles:
+            particle.weight = self.compute_prenorm_weight(particle, sensor, max_sensor_range, sensor_std, evidence)
+        normalize_weights(new_particles)
+        new_particles = self.weighted_sample_w_replacement(new_particles)
         # END_YOUR_CODE ########################################################
 
         return new_particles
@@ -125,10 +130,11 @@ class ParticleFilter:
         """
         weight = None
         # BEGIN_YOUR_CODE ######################################################
-        raise NotImplementedError
-        #Hint: use the weight_gaussian_kernel method
-
-        
+        predicted_evidence = sensor(particle.pos[0], particle.pos[1], max_sensor_range, other_car_pos=None, noisy=False, std=sensor_std)
+        weight = 1.0
+        for i in range(len(evidence)):
+            if evidence[i] < max_sensor_range:
+                weight *= weight_gaussian_kernel(predicted_evidence[i], evidence[i], sensor_std)
         # END_YOUR_CODE ########################################################
         return weight
 
@@ -136,12 +142,13 @@ class ParticleFilter:
         """
         Samples a next pose for this particle according to the car's transition model.
         """
-        new_particle = None
-        # BEGIN_YOUR_CODE ######################################################
-        raise NotImplementedError
-        #Hint: rotate the orientation by delta_angle, and then move in that
-        # direction at the given speed over 1 unit of time. You will need to add
-        # noise at the end to simulate stochasticity in dynamics
+        new_pos = particle.pos + particle.orient * speed
+        theta = np.arctan2(particle.orient[1], particle.orient[0]) + delta_angle
+        new_orient = np.array([np.cos(theta), np.sin(theta)])
+        new_particle = Particle(new_pos, new_orient)
+        new_particle.add_noise(std_pos=1.0, std_orient=0.1)
+        return new_particle
+
     
     def fix_particle(self, particle):
         """
@@ -175,7 +182,7 @@ class ParticleFilter:
         
         return new_particles
 
-def weight_gaussian_kernel(x1, x2, std = 500):
+def weight_gaussian_kernel(x1, x2, std = 250):
     """
     Returns the gaussian kernel of the distance between vectors x1 and x2
     std: controls the shape of the gaussian, i.e. controls how much you penalize

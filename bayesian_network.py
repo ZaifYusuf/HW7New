@@ -30,7 +30,7 @@ def generate_bayesnet():
     # BEGIN_YOUR_CODE ######################################################
     
     # END_YOUR_CODE ########################################################
-
+    return bayes_net
 
 
 def find_best_overtake_condition(bayes_net):

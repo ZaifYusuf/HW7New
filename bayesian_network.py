@@ -47,8 +47,8 @@ def generate_bayesnet():
     # Calculate probabilities
     P_MuchFaster = {k: v / total_data for k, v in freq['MuchFaster'].items()}
     P_Early = {k: v / total_data for k, v in freq['Early'].items()}
-    P_Overtake = {(k0, k1): v / (freq['MuchFaster'][k0] + freq['Early'][k1]) for (k0, k1), v in freq['Overtake'].items()}
-    P_Crash = {(k0, k1): v / (freq['MuchFaster'][k0] + freq['Early'][k1]) for (k0, k1), v in freq['Crash'].items()}
+    P_Overtake = {(k0, k1): v / freq['MuchFaster'][k0] for (k0, k1), v in freq['Overtake'].items()}
+    P_Crash = {(k0, k1): v / freq['MuchFaster'][k0] for (k0, k1), v in freq['Crash'].items()}
     P_Win = {(k0, k1): v / freq['Overtake'][k0, k1] for (k0, k1), v in freq['Win'].items()}
 
     # Create the BayesNet

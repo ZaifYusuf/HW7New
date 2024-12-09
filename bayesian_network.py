@@ -4,7 +4,6 @@ from probability import BayesNet, enumeration_ask, elimination_ask, rejection_sa
 from timeit import timeit, repeat
 import pickle
 import numpy as np
-
 T, F = True, False
 
 class DataPoint:
@@ -28,8 +27,41 @@ def generate_bayesnet():
     # load the dataset, a list of DataPoint objects
     data = pickle.load(open("data/bn_data.p","rb"))
     # BEGIN_YOUR_CODE ######################################################
-    
-    # END_YOUR_CODE ########################################################
+    total = len(data)
+    much_faster_prob = sum(dp.muchfaster for dp in data) / total
+    early_prob = sum(dp.early for dp in data) / total
+
+    overtake_counts = {}
+    crash_counts = {}
+    win_counts = {}
+
+    for dp in data:
+        mf_early = (dp.muchfaster, dp.early)
+        if mf_early not in overtake_counts:
+            overtake_counts[mf_early] = [0, 0]
+        overtake_counts[mf_early][dp.overtake] += 1
+
+        if mf_early not in crash_counts:
+            crash_counts[mf_early] = [0, 0]
+        crash_counts[mf_early][dp.crash] += 1
+
+        overtake_crash = (dp.overtake, dp.crash)
+        if overtake_crash not in win_counts:
+            win_counts[overtake_crash] = [0, 0]
+        win_counts[overtake_crash][dp.win] += 1
+
+    # Normalize counts into probabilities
+    overtake_probs = {k: v[1] / sum(v) for k, v in overtake_counts.items()}
+    crash_probs = {k: v[1] / sum(v) for k, v in crash_counts.items()}
+    win_probs = {k: v[1] / sum(v) for k, v in win_counts.items()}
+
+    # Define the Bayesian Network structure and CPTs
+    bayes_net.add(('MuchFaster', '', much_faster_prob))
+    bayes_net.add(('Early', '', early_prob))
+    bayes_net.add(('Overtake', 'MuchFaster Early', overtake_probs))
+    bayes_net.add(('Crash', 'MuchFaster Early', crash_probs))
+    bayes_net.add(('Win', 'Overtake Crash', win_probs))
+
     return bayes_net
 
 
